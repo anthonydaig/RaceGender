@@ -1000,5 +1000,11 @@ plt.xlabel("Nonwhite = 0, White = 1")
 plt.show()
 
 
+#### look at most important features
+ind = np.argpartition(trainer.feature_importances_, -50)[-50:]
+checker = (x_cols[i] for i in ind)
+checker = tuple(checker)
+
+
 
 
