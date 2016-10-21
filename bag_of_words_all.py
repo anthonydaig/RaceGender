@@ -901,7 +901,7 @@ from sklearn.ensemble import RandomForestClassifier
 from numpy.random import permutation
 from math import floor
 
-rfc = RandomForestClassifier(n_estimators = 800, max_features =75)
+rfc = RandomForestClassifier(n_estimators = 800, max_features =6)
 random_indices = permutation(new_data.index)
 
 test_cutoff = math.floor(len(new_data)/4)
@@ -952,24 +952,22 @@ plt.show()
 
 ######### race ########
 
-rfc = RandomForestClassifier(n_estimators = 800, max_features =75)
+rfc = RandomForestClassifier(n_estimators = 800, max_features = 6)
 random_indices = permutation(new_data.index)
-
-test_cutoff = math.floor(len(new_data)/4)
-
-test_set = new_data[x_cols].loc[random_indices[test_cutoff:]]
-test_y = new_data.loc[random_indices[test_cutoff:]].race_w
-cv_set = new_data[x_cols].loc[random_indices[:test_cutoff]]
-cv_y = new_data.loc[random_indices[:test_cutoff]].race_w
+train_cutoff = math.floor(len(new_data)/4)
+train_set = new_data[x_cols].loc[random_indices[train_cutoff:]]
+train_y = new_data.loc[random_indices[train_cutoff:]].race_w
+cv_set = new_data[x_cols].loc[random_indices[:train_cutoff]]
+cv_y = new_data.loc[random_indices[:train_cutoff]].race_w
 
 
-trainer = rfc.fit(test_set, test_y)
+trainer = rfc.fit(train_set, train_y)
 
-predicts = rfc.predict_proba(test_set)
+predicts = rfc.predict_proba(train_set)
 white = []
 nonwhite = []
 for k in range(len(predicts)):
-    if test_y.iloc[k] == 1:
+    if train_y.iloc[k] == 1:
         white.append(predicts[k][1])
     else:
         nonwhite.append(predicts[k][1])
@@ -982,6 +980,8 @@ plt.title("Random Forest, Training Set")
 plt.xlabel("Nonwhite = 0, White = 1")
 plt.show()
 
+
+###### gender #########
 
 predicts = rfc.predict_proba(cv_set)
 white = []
@@ -1004,6 +1004,48 @@ plt.show()
 ind = np.argpartition(trainer.feature_importances_, -50)[-50:]
 checker = (x_cols[i] for i in ind)
 checker = tuple(checker)
+
+
+##### k - fold cv #########
+from sklearn.cross_validation import cross_val_predict
+from sklearn.cross_validation import cross_val_score
+from sklearn.cross_validation import KFold
+
+rfc = RandomForestClassifier(n_estimators = 800, max_features = 6)
+
+random_indices = permutation(new_data.index)
+train_cutoff = math.floor(len(new_data)/4)
+train_set = new_data[x_cols].loc[random_indices[test_cutoff:]]
+train_y = new_data.loc[random_indices[test_cutoff:]].gender_num
+cv_set = new_data[x_cols].loc[random_indices[:test_cutoff]]
+cv_y = new_data.loc[random_indices[:test_cutoff]].gender_num
+
+
+# both things below do the same thing -- just wanted to make sure scores was doing was what i wanted it to do
+###
+scores = cross_val_score(trainer, train_set, train_y, cv = 10)
+###
+
+########
+male = []
+female = []
+kf = KFold(train_set.shape[0], 10)
+for train, test in kf:
+	rfc.fit(train_set.iloc[train], train_y.iloc[train])
+	print(rfc.score(train_set.iloc[test], train_y.iloc[test]))
+######## outputs:
+# 0.644578313253
+# 0.627510040161
+# 0.682730923695
+# 0.683417085427
+# 0.67135678392
+# 0.682412060302
+# 0.67135678392
+# 0.665326633166
+# 0.659296482412
+# 0.700502512563
+
+
 
 
 
