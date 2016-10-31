@@ -1047,6 +1047,12 @@ for train, test in kf:
 
 
 
+indices = np.argsort(rfc.feature_importances_)[::-1]
+check_most = indices[0:100]
+for k in six_most:
+    print(new_data.columns[k])
+
+
 
 
 
