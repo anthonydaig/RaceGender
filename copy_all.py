@@ -11,6 +11,15 @@ import matplotlib.pyplot as plt
 from operator import add
 from numpy.random import permutation
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from numpy.random import permutation
+from math import floor
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import auc
+from sklearn.model_selection import KFold
+from sklearn.model_selection import permutation_test_score
+from sklearn.model_selection import StratifiedKFold
 
 def union(a, b):
     """ return the union of two lists """
@@ -342,6 +351,7 @@ remove_bg = [
  ('this', 'yalenew'),
  ('program', 'surgerygeneral'),
  ('irna', 'pnrial'),
+ ('young', 'lady;'),
  ('13093147', '03/25/2016'),
  ('\x00p\x00r\x00o\x00g\x00r\x00a\x00m\x00\x00',
   '\x00d\x00e\x00r\x00m\x00a\x00t\x00o\x00l\x00o\x00g\x00y\x00'),
@@ -398,6 +408,7 @@ remove_bg = [
 	("waived", "right"),
 	("dear", "program"),
 	("letter", "recommendation"),
+	('johns', 'hopkins'),
 	("work", "with"),
 	("medical", "school"),
 	("application", "process"),
@@ -407,6 +418,9 @@ remove_bg = [
 	("september", "2015"),
 	("september", "2016"),
 	("program", "internal"),
+	('young', 'woman'),
+	('page', 'aasnes'),
+	('gynecology', 'page'),
 	("worked", "with"),
 	("right", "this"),
 	("medicine", "clerkship"),
@@ -477,6 +491,7 @@ check_bg = [
 remove = ['and',
  'the',
  'his',
+ 'She',
  'her',
  'with',
  'for',
@@ -507,7 +522,6 @@ remove = ['and',
  'very',
  'Confidential',
  'view',
- 'she',
  'distribute',
  'persons',
  'disclose',
@@ -583,6 +597,7 @@ remove = ['and',
  'Middle',
  'other',
  'questions',
+ 'she',
  'a',
  'Pass',
  'their',
@@ -597,122 +612,211 @@ remove = ['and',
  'Ability',
  'yalenew',
  'department',
+ 'otolaryngology'
+ 'obstetrics',
+ 'Obstetrics',
+ 'gynecology',
+ 'John'
+ 'Gynecology',
+'she',
  'Sincerely']
- ##########################################################
+ ##########################
 
 
-for kk in dict_of_dicts.keys():
-	print(kk)
-	dictt = dict_of_dicts[kk]
-	dff = pd.DataFrame(list(dictt.items()))
-	dff.columns = ['word', 'count']
-	helpp = dff[~dff.word.isin(remove)]
-	print(helpp.nlargest(30, 'count'))
-	# input()
+bg_use = [
+	('honor', 'medical') ,
+	('experiences', 'also') ,
+	('honors', 'high') ,
+	('this', 'students') ,
+	('support', 'application') ,
+	('passion', 'organization') ,
+	('this', 'capacity') ,
+	('chapter', 'alpha') ,("with", "patients"),
+('alpha', 'honor') ,
+('care', 'highly') ,
+('that', 'assistant') ,
+('written', 'paper') ,
+('medical', 'duties') ,
+('hard', 'work') ,
+('students', 'underserved') ,
+('pleasure', 'that') ,
+('mentored', 'role') ,
+('cannot', 'assess') ,
+('candidacy', 'including') ,
+('impressed', 'with') ,
+('during', 'internal') ,
+('primary', 'care') ,
+('performed', 'research') ,
+('conscientiousness', 'technical') ,
+('patients', 'their') ,
+('communicate', 'caring') ,
+('nature', 'contact') ,
+('caring', 'nature') ,
+('assessment', 'compared') ,
+('compassion', 'hard') ,
+('recommended', 'last') ,
+('pleasure', 'work') ,
+('above', 'peers') ,
+('lower', 'unlikely') ,
+('applicant', 'outstanding') ,
+('applicants', 'work') ,
+('applicants', 'strongest') ,
+('applicant', 'rotated') ,
+('medical', 'knowledge') ,
+('patients', 'families') ,
+('lower', 'ability') ,
+('level', 'judgement') ,
+('your', 'internal') ,
+('students', 'rotating') ,
+('with', 'others') ,
+('community', 'involvement') ,
+('this', 'candidate') ,
+('with', 'great') ,
+('interpersonal', 'skills') ,
+('recommended', 'each') ,
+('questionable', 'unethical') ,
+('above', 'beyond') ,
+('team', 'player') ,
+('highest', 'recommendation') ,
+('positive', 'attitude') ,
+('with', 'highest') ,
+('care', 'patients') ,
+('this', 'student') ,
+('knowledge', 'base') ,
+('leadership', 'compassion') ,
+('with', 'team') ,
+('very', 'well') ,
+('very', 'happy') ,
+('advanced', 'medicine') ,
+('lower', 'work') ,
+('extended', 'direct') ,
+('balance', 'community') ,
+('excellent', 'command') ,
+('directly', 'with') ,
+('academic', 'skills') ,
+('recognition', 'limits') ,
+('qualifications', 'compare') ,
+('know', 'indirectly') ,
+('altruism', 'recognition') ,
+('enough', 'good') ,
+('cohesive', 'treatment') ,
+('rapport', 'with') ,
+('applicants', 'weakest') ,
+('have', 'doubt') ,
+('excellent', 'good') ,
+('ethical', 'issues') ,
+('research', 'projects') ,
+('excellent', 'performance') ,
+('hard', 'working') ,
+('performance', 'during') ,
+('than', 'peers') ,
+('very', 'good') ,
+('strongest', 'point') ,
+('applicant', 'performed') ,
+('been', 'very') ,
+('technical', 'ability') ,
+('great', 'pleasure') ,
+('relevant', 'noncognitive') ,
+('ethics', 'public') ,
+('work', 'ethic') ,
+('while', 'maintaining') ,
+('without', 'reservation') ,
+('very', 'active') ,
+('patient', 'care') ,
+('exposure', 'unable') ,
+('presentations', 'were') ,
+('fund', 'knowledge') ,
+('leadership', 'skills') ,
+('social', 'determinants') ,
+('closely', 'with') ,
+('paper', 'with') ,
+('above', 'average') ,
+('most', 'appropriate')
+]
 
-for kk in dict_of_dicts_gender.keys():
-	print(kk)
-	dictt = dict_of_dicts_gender[kk]
-	dff = pd.DataFrame(list(dictt.items()))
-	dff.columns = ['word', 'count']
-	helpp = dff[~dff.word.isin(remove)]
-	print(helpp.nlargest(30, 'count'))
-	# input()
-
-
-for kk in dict_of_dicts_race.keys():
-	print(kk)
-	dictt = dict_of_dicts_race[kk]
-	dff = pd.DataFrame(list(dictt.items()))
-	dff.columns = ['word', 'count']
-	helpp = dff[~dff.word.isin(remove)]
-	print(helpp.nlargest(30, 'count'))
-	# input()
 
 
 
-
-for kk in dict_of_dicts_bg.keys():
-	print(kk)
-	dictt = dict_of_dicts_bg[kk]
-	dff = pd.DataFrame(list(dictt.items()))
-	dff.columns = ['word', 'count']
-	helpp = dff[~dff.word.isin(remove_bg)]
-	print(helpp.nlargest(50, 'count'))
-	# input()
+ug_use = [
+ 'highly',
+ 'ethics',
+  'learning',
+ 'happy',
+  'professionalism',
+ 'directly',
+ 'personal',
+  'performing',
+   'demonstrated',
+    'strong',
+     'best',
+      'support',
+       'great',
+        'working',
+         'knowledge',
+ 'active',
+ 'appropriate',
+ 'first',
+ 'care',
+ 'inpatient',
+  'excellent',
+   'impressed',
+    'experiences',
+     'good',
+      'writing',
+  'performance',
+   'highest',
+    'ethic',
+     'impressive',
+      'communicate',
+       'player',
+        'ability',
+ 'strongest',
+ 'outstanding'
+]
+print('Finished Making Dicts')
+ ########################################
+bigrams = bg_use
 
 for kk in dict_of_dicts_gender_bg.keys():
-	print(kk)
+	# print(kk)
 	if kk == "FALSE":
 		continue
 	dictt = dict_of_dicts_gender_bg[kk]
 	dff = pd.DataFrame(list(dictt.items()))
 	dff.columns = ['word', 'count']
 	helpp = dff[~dff.word.isin(remove_bg)]
-	print(helpp.nlargest(50, 'count'))
+	# print(helpp.nlargest(100, 'count'))
 	# input()
-
-
-for kk in dict_of_dicts_race_bg.keys():
-	print(kk)
-	dictt = dict_of_dicts_race_bg[kk]
-	dff = pd.DataFrame(list(dictt.items()))
-	dff.columns = ['word', 'count']
-	helpp = dff[~dff.word.isin(remove_bg)]
-	print(helpp.nlargest(30, 'count'))
-	# input()
-
-
-
-# things i have: rg_to_ID, ID_to_rg, pd_total, pd_groups, dict_of_dicts
-
-# testme = test_me[~test_me.word.isin(remove)]
-
-# test_me = pd.DataFrame(list(dict_of_dicts[(8, 'Male')].items()))
-
-### Make Data Set #################
-
-bigrams = []
-
-for kk in dict_of_dicts_bg.keys():
-	print(kk)
-	if kk == "FALSE":
-		continue
-	dictt = dict_of_dicts_bg[kk]
-	dff = pd.DataFrame(list(dictt.items()))
-	dff.columns = ['word', 'count']
-	helpp = dff[~dff.word.isin(remove_bg)]
-	print(helpp.nlargest(100, 'count'))
-	# input()
-	ok = helpp.nlargest(100, 'count')
+	ok = helpp.nlargest(250, 'count')
 	choices = list(ok.word)
 	bigrams = union(choices, bigrams)
 	# input()
 
-prev_id = ''
-unigrams = ['excellent', 'care', 'skills', 'great', 'outstanding', 'working', 'support', 'service', 'strong', 
-'knowledge', 'recommend']
+
+########################################
+unigrams = ug_use
+
 for kk in dict_of_dicts.keys():
-	print(kk)
+	# print(kk)
 	if kk == "FALSE":
 		continue
 	dictt = dict_of_dicts[kk]
 	dff = pd.DataFrame(list(dictt.items()))
 	dff.columns = ['word', 'count']
 	helpp = dff[~dff.word.isin(remove)]
-	print(helpp.nlargest(100, 'count'))
+	# print(helpp.nlargest(150, 'count'))
 	# input()
-	ok = helpp.nlargest(100, 'count')
+	ok = helpp.nlargest(150, 'count')
 	choices = list(ok.word)
 	unigrams = union(choices, unigrams)
 	# input()
 
 
-
-#### make dataframe ######
+###########################
+#data_frame_fam
 prev_id = ''
-# unigrams = []
-bigrams = bg_use
+# unigrams = ug_use
+# bigrams = bg_use
 table = [[("racengender"),"race", "gender"] + bigrams + unigrams]
 id_row = defaultdict(lambda:[])
 
@@ -755,254 +859,7 @@ headers = table.pop(0)
 new_data = pd.DataFrame(table, columns = headers)
 x_cols = list(new_data.columns)[3:]
 print(new_data.head())
-input()
-##################################################
 
-
-
-
-####################### try out KNN, find best num of neighbors (stupid) #######
-
-#### bigrams + unigrams #########
-# y_cols = ['gender']
-# x_cols = list(new_data.columns)[3:]
-# random_indices = permutation(new_data.index)
-# test_cutoff = math.floor(len(new_data)/3)
-# test = new_data.loc[random_indices[1:test_cutoff]]
-# train = new_data.loc[random_indices[test_cutoff:]]
-# knn = KNeighborsClassifier(n_neighbors=3)
-# knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-# predictions = knn.predict(test[x_cols])
-
-# counter = 0
-# for i in range(len(predictions)):
-#     if predictions[i] == test['gender'].iloc[i]:
-#         counter+=1
-
-# print(counter / len(predictions))
-
-# y_cols = ['gender']
-# x_cols = list(new_data.columns)[3:]
-# random_indices = permutation(new_data.index)
-# test_cutoff = math.floor(len(new_data)/3)
-# test = new_data.loc[random_indices[1:test_cutoff]]
-# train = new_data.loc[random_indices[test_cutoff:]]
-# knn = KNeighborsClassifier(n_neighbors=3)
-# knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-# predictions = knn.predict(test[x_cols])
-
-# counter = 0
-# for i in range(len(predictions)):
-#     if predictions[i] == test['gender'].iloc[i]:
-#         counter+=1
-
-# print(counter / len(predictions))
-
-
-# y_cols = ['racengender']
-# acc_racengender = []
-# for j in range(1,51):
-# 	counter = 0
-# 	random_indices = permutation(new_data.index)
-# 	test = new_data.loc[random_indices[1:test_cutoff]]
-# 	train = new_data.loc[random_indices[test_cutoff:]]
-# 	knn = KNeighborsClassifier(n_neighbors=j)
-
-# 	knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-# 	predictions = knn.predict(test[x_cols])
-# 	for i in range(len(predictions)):
-
-# 		helpp = predictions[i]
-# 		comp = (int(helpp[0]), helpp[1])
-# 		if comp == test['racengender'].iloc[i]:
-# 			counter+=1
-
-# 		# print(tuple(predictions[i]), test['racengender'].iloc[i])
-# 		# print(counter)
-# 		# input()
-
-# 	acc_racengender.append(counter / len(predictions))
-# 	print(counter / len(predictions), j)
-
-
-# y_cols = ['gender']
-# acc_gend = []
-# for j in range(1,51):
-# 	counter = 0
-# 	random_indices = permutation(new_data.index)
-# 	test = new_data.loc[random_indices[1:test_cutoff]]
-# 	train = new_data.loc[random_indices[test_cutoff:]]
-# 	knn = KNeighborsClassifier(n_neighbors=j)
-
-# 	knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-# 	predictions = knn.predict(test[x_cols])
-# 	for i in range(len(predictions)):
-
-# 		if predictions[i] == test['gender'].iloc[i]:
-# 			counter+=1
-
-# 	acc_gend.append(counter/len(predictions))
-# 	print(counter / len(predictions), j)
-
-# y_cols = ['race']
-# acc_race = []
-# for j in range(1,51):
-# 	counter = 0
-# 	random_indices = permutation(new_data.index)
-# 	test = new_data.loc[random_indices[1:test_cutoff]]
-# 	train = new_data.loc[random_indices[test_cutoff:]]
-# 	knn = KNeighborsClassifier(n_neighbors=j)
-
-# 	knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-# 	predictions = knn.predict(test[x_cols])
-# 	for i in range(len(predictions)):
-
-# 		if predictions[i] == test['race'].iloc[i]:
-# 			counter+=1
-
-# 	acc_race.append(counter/len(predictions))
-# 	print(counter / len(predictions), j)
-
-######### try just bigrams #############
-
-# y_cols = ['racengender']
-# x_cols = bigrams
-# acc_racengender_bg = []
-# for j in range(1,51):
-# 	counter = 0
-# 	random_indices = permutation(new_data.index)
-# 	test = new_data.loc[random_indices[1:test_cutoff]]
-# 	train = new_data.loc[random_indices[test_cutoff:]]
-# 	knn = KNeighborsClassifier(n_neighbors=j)
-
-# 	knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-# 	predictions = knn.predict(test[x_cols])
-# 	for i in range(len(predictions)):
-
-# 		helpp = predictions[i]
-# 		comp = (int(helpp[0]), helpp[1])
-# 		if comp == test['racengender'].iloc[i]:
-# 			counter+=1
-
-# 		# print(tuple(predictions[i]), test['racengender'].iloc[i])
-# 		# print(counter)
-# 		# input()
-
-# 	acc_racengender_bg.append(counter / len(predictions))
-# 	print(counter / len(predictions), j)
-
-
-# y_cols = ['gender']
-# acc_gend_bg = []
-# for j in range(1,51):
-# 	counter = 0
-# 	random_indices = permutation(new_data.index)
-# 	test = new_data.loc[random_indices[1:test_cutoff]]
-# 	train = new_data.loc[random_indices[test_cutoff:]]
-# 	knn = KNeighborsClassifier(n_neighbors=j)
-
-# 	knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-# 	predictions = knn.predict(test[x_cols])
-# 	for i in range(len(predictions)):
-
-# 		if predictions[i] == test['gender'].iloc[i]:
-# 			counter+=1
-
-# 	acc_gend_bg.append(counter/len(predictions))
-# 	print(counter / len(predictions), j)
-
-# y_cols = ['race']
-# acc_race_bg = []
-# for j in range(1,51):
-# 	counter = 0
-# 	random_indices = permutation(new_data.index)
-# 	test = new_data.loc[random_indices[1:test_cutoff]]
-# 	train = new_data.loc[random_indices[test_cutoff:]]
-# 	knn = KNeighborsClassifier(n_neighbors=j)
-
-# 	knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-# 	predictions = knn.predict(test[x_cols])
-# 	for i in range(len(predictions)):
-
-# 		if predictions[i] == test['race'].iloc[i]:
-# 			counter+=1
-
-# 	acc_race_bg.append(counter/len(predictions))
-# 	print(counter / len(predictions), j)
-
-
-x_cols = list(new_data.columns)[3:]
-y_cols = ['race']
-test = new_data.loc[random_indices[1:test_cutoff]]
-train = new_data.loc[random_indices[test_cutoff:]]
-knn = KNeighborsClassifier(n_neighbors=26)
-knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-predictions_r = knn.predict(test[x_cols])
-
-x_cols = list(new_data.columns)[3:]
-y_cols = ['gender']
-# test = new_data.loc[random_indices[1:test_cutoff]]
-# train = new_data.loc[random_indices[test_cutoff:]]
-knn = KNeighborsClassifier(n_neighbors=44)
-knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-predictions_g = knn.predict(test[x_cols])
-
-x_cols = list(new_data.columns)[3:]
-y_cols = ['racengender']
-# test = new_data.loc[random_indices[1:test_cutoff]]
-# train = new_data.loc[random_indices[test_cutoff:]]
-knn = KNeighborsClassifier(n_neighbors=43)
-knn.fit(train[x_cols], list(train[y_cols].values.ravel()))
-predictions_rg = knn.predict(test[x_cols])
-
-############################################################
-
-
-
-
-
-
-
-######### try logistic regression
-
-
-model = LogisticRegression(C = 1, max_iter = 8000000, tol = 1e-18)
-mdl = model.fit(new_data[x_cols].iloc[:10000], new_data.gender_num.iloc[:10000].values)
-# testt = new_data.iloc[:10000]
-testt = new_data.iloc[10000:]
-girls = []
-boyz = []
-predicts = model.predict_proba(testt[x_cols])
-classif = model.predict(testt[x_cols])
-
-
-girls = []
-boyz = []
-for k in range(len(predicts)):
-    if testt.gender_num.iloc[k] == 1:
-        girls.append(predicts[k][0])
-    else:
-        boyz.append(predicts[k][0])
-
-
-c.distplot(girls, label = 'Female', kde = False, color = 'red')
-c.distplot(boyz, label = 'Male', kde = False, color = 'blue')
-plt.legend()
-plt.title("Logistic Regression Score By Gender")
-plt.show()
-
-for_mat = new_data.iloc[:10000].copy()
-for_mat["pred"] = classif
-for_mat["diff"] = abs(for_mat.classif - for_mat.gender_num)
-conf = confusion_matrix(for_mat.gender_num, classif)
-####################################
-
-
-
-
-####### random forest ##################
-
-#### make white/nonwhite binary and gender binary
 
 gend = []
 racew = []
@@ -1022,164 +879,185 @@ new_data['gender_num'] = gend
 new_data['race_w'] = racew
 
 
-########## do genders #########
+new_data_norm = (new_data[x_cols] - new_data[x_cols].mean()) / (new_data[x_cols].max() - new_data[x_cols].min())
+new_data_norm['race_w'] = new_data['race_w']
+new_data_norm['gender_num'] = new_data['gender_num']
+# x_cols.remove('Ability')
+print('Finished Making DataSet')
+def predict_gender(df, x_cols):
 
-from sklearn.ensemble import RandomForestClassifier
-from numpy.random import permutation
-from math import floor
+	rfc = RandomForestClassifier(n_estimators = 800, max_features =7, oob_score = True)
+	random_indices = permutation(df.index)
 
-rfc = RandomForestClassifier(n_estimators = 800, max_features =10)
-random_indices = permutation(new_data.index)
+	test_cutoff = math.floor(df.shape[0]/4)
 
-test_cutoff = math.floor(len(new_data)/10)
+	test_set = df[x_cols].loc[random_indices[test_cutoff:]]
+	test_y = df.loc[random_indices[test_cutoff:]].gender_num
+	cv_set = df[x_cols].loc[random_indices[:test_cutoff]]
+	cv_y = df.loc[random_indices[:test_cutoff]].gender_num
+	trainer = rfc.fit(test_set, test_y)
 
-test_set = new_data[x_cols].loc[random_indices[test_cutoff:]]
-test_y = new_data.loc[random_indices[test_cutoff:]].gender_num
-cv_set = new_data[x_cols].loc[random_indices[:test_cutoff]]
-cv_y = new_data.loc[random_indices[:test_cutoff]].gender_num
-
-
-trainer = rfc.fit(test_set, test_y)
-
-predicts = rfc.predict_proba(test_set)
-girls = []
-boyz = []
-for k in range(len(predicts)):
-    if test_y.iloc[k] == 1:
-        girls.append(predicts[k][0])
-    else:
-        boyz.append(predicts[k][0])
-
-
-c.distplot(girls, label = 'Female', kde = False, color = 'red')
-c.distplot(boyz, label = 'Male', kde = False, color = 'blue')
-plt.legend()
-plt.title("Random Forest, Training Set")
-plt.xlabel("Male = 0, Female = 1")
-plt.show()
+	predicts = rfc.predict_proba(test_set)
+	girls = []
+	boyz = []
+	for k in range(len(predicts)):
+	    if test_y.iloc[k] == 1:
+	        girls.append(predicts[k][0])
+	    else:
+	        boyz.append(predicts[k][0])
 
 
-predicts = rfc.predict_proba(cv_set)
-girls = []
-boyz = []
-for k in range(len(predicts)):
-    if cv_y.iloc[k] == 1:
-        girls.append(predicts[k][0])
-    else:
-        boyz.append(predicts[k][0])
-
-c.distplot(girls, label = 'Female', kde = False, color = 'red', bins = 50)
-c.distplot(boyz, label = 'Male', kde = False, color = 'blue', bins = 50)
-plt.legend()
-plt.title("Random Forest, Cross Validation")
-plt.xlabel("Male = 0, Female = 1")
-plt.show()
+	c.distplot(girls, label = 'Female', kde = False, color = 'red')
+	c.distplot(boyz, label = 'Male', kde = False, color = 'blue')
+	plt.legend()
+	plt.title("Random Forest, Training Set")
+	plt.xlabel("Male = 0, Female = 1")
+	plt.show()
 
 
+	predicts = rfc.predict_proba(cv_set)
+	girls = []
+	boyz = []
+	for k in range(len(predicts)):
+	    if cv_y.iloc[k] == 1:
+	        girls.append(predicts[k][0])
+	    else:
+	        boyz.append(predicts[k][0])
 
-######### race ########
-
-rfc = RandomForestClassifier(n_estimators = 800, max_features = 6, oob_score = True)
-random_indices = permutation(new_data.index)
-train_cutoff = math.floor(len(new_data)/4)
-train_set = new_data[x_cols].loc[random_indices[train_cutoff:]]
-train_y = new_data.loc[random_indices[train_cutoff:]].race_w
-cv_set = new_data[x_cols].loc[random_indices[:train_cutoff]]
-cv_y = new_data.loc[random_indices[:train_cutoff]].race_w
-
-
-trainer = rfc.fit(train_set, train_y)
-
-predicts = rfc.predict_proba(train_set)
-white = []
-nonwhite = []
-for k in range(len(predicts)):
-    if train_y.iloc[k] == 1:
-        white.append(predicts[k][1])
-    else:
-        nonwhite.append(predicts[k][1])
+	c.distplot(girls, label = 'Female', kde = False, color = 'red', bins = 50)
+	c.distplot(boyz, label = 'Male', kde = False, color = 'blue', bins = 50)
+	plt.legend()
+	plt.title("Random Forest, Cross Validation")
+	plt.xlabel("Male = 0, Female = 1")
+	plt.show()
+	print(rfc.oob_score_)
+	return rfc
 
 
-c.distplot(white, label = 'White', kde = False, color = 'red')
-c.distplot(nonwhite, label = 'Nonwhite', kde = False, color = 'blue')
-plt.legend()
-plt.title("Random Forest, Training Set")
-plt.xlabel("Nonwhite = 0, White = 1")
-plt.show()
+def predict_race(df, x_cols):
+
+	rfc = RandomForestClassifier(n_estimators = 1500, max_features =7, oob_score = True, class_weight = 'balanced')
+	random_indices = permutation(df.index)
+
+	test_cutoff = math.floor(df.shape[0]/4)
+
+	test_set = df[x_cols].loc[random_indices[test_cutoff:]]
+	test_y = df.loc[random_indices[test_cutoff:]].race_w
+	cv_set = df[x_cols].loc[random_indices[:test_cutoff]]
+	cv_y = df.loc[random_indices[:test_cutoff]].race_w
+	trainer = rfc.fit(test_set, test_y)
+
+	predicts = rfc.predict_proba(test_set)
+	girls = []
+	boyz = []
+	for k in range(len(predicts)):
+	    if test_y.iloc[k] == 1:
+	        girls.append(predicts[k][0])
+	    else:
+	        boyz.append(predicts[k][0])
 
 
-###### gender #########
-
-predicts = rfc.predict_proba(cv_set)
-white = []
-nonwhite = []
-for k in range(len(predicts)):
-    if cv_y.iloc[k] == 1:
-        white.append(predicts[k][1])
-    else:
-        nonwhite.append(predicts[k][1])
-
-c.distplot(white, label = 'White', kde = False, color = 'red')
-c.distplot(nonwhite, label = 'Nonwhite', kde = False, color = 'blue')
-plt.legend()
-plt.title("Random Forest, Cross Validation")
-plt.xlabel("Nonwhite = 0, White = 1")
-plt.show()
+	c.distplot(girls, label = 'White', kde = False, color = 'red')
+	c.distplot(boyz, label = 'Nonwhite', kde = False, color = 'blue')
+	plt.legend()
+	plt.title("Random Forest, Training Set")
+	plt.xlabel("Nonwhite = 0, White = 1")
+	plt.show()
 
 
-#### look at most important features
-ind = np.argpartition(trainer.feature_importances_, -50)[-50:]
-checker = (x_cols[i] for i in ind)
-checker = tuple(checker)
+	predicts = rfc.predict_proba(cv_set)
+	girls = []
+	boyz = []
+	for k in range(len(predicts)):
+	    if cv_y.iloc[k] == 1:
+	        girls.append(predicts[k][0])
+	    else:
+	        boyz.append(predicts[k][0])
+
+	c.distplot(girls, label = 'White', kde = False, color = 'red', bins = 50)
+	c.distplot(boyz, label = 'Nonwhite', kde = False, color = 'blue', bins = 50)
+	plt.legend()
+	plt.title("Random Forest, Cross Validation")
+	plt.xlabel("Nonwhite = 0, White = 1")
+	plt.show()
+	print(rfc.oob_score_)
+	return rfc
+# x_cols.remove('General')
+# x_cols.remove('Grucral')
 
 
-##### k - fold cv #########
-from sklearn.cross_validation import cross_val_predict
-from sklearn.cross_validation import cross_val_score
-from sklearn.cross_validation import KFold
+print('Starting the Permutation Testing')
 
-rfc = RandomForestClassifier(n_estimators = 800, max_features = 6)
+by_race = new_data.groupby('race')
+black = by_race.get_group(3)
+white = by_race.get_group(8)
+for i in x_cols:
+	print(i)
 
-random_indices = permutation(new_data.index)
-train_cutoff = math.floor(len(new_data)/4)
-train_set = new_data[x_cols].loc[random_indices[test_cutoff:]]
-train_y = new_data.loc[random_indices[test_cutoff:]].gender_num
-cv_set = new_data[x_cols].loc[random_indices[:test_cutoff]]
-cv_y = new_data.loc[random_indices[:test_cutoff]].gender_num
-
-
-# both things below do the same thing -- just wanted to make sure scores was doing was what i wanted it to do
-###
-scores = cross_val_score(trainer, train_set, train_y, cv = 10)
-###
-
-########
-male = []
-female = []
-kf = KFold(train_set.shape[0], 10)
-for train, test in kf:
-	rfc.fit(train_set.iloc[train], train_y.iloc[train])
-	print(rfc.score(train_set.iloc[test], train_y.iloc[test]))
-######## outputs:
-# 0.644578313253
-# 0.627510040161
-# 0.682730923695
-# 0.683417085427
-# 0.67135678392
-# 0.682412060302
-# 0.67135678392
-# 0.665326633166
-# 0.659296482412
-# 0.700502512563
+input()
 
 
 
-indices = np.argsort(rfc.feature_importances_)[::-1]
-check_most = indices[0:300]
-for k in check_most:
-    print(new_data.columns[k])
+data_array = white[x_cols].values
+data_array_y = white.gender_num.values
 
 
+rfc = RandomForestClassifier(n_estimators = 1500, max_features =7, oob_score = True, class_weight = 'balanced')
+cv = StratifiedKFold(10)
+
+score, permutation_scores, pvalue = permutation_test_score(
+    rfc, data_array, data_array_y, scoring="roc_auc", cv=cv, n_permutations=150)
+
+print(score)
+print(permutation_scores)
+print(pvalue)
+
+# plt.hist(permutation_scores, bins =20, label='Permutation scores')
+# ylim = plt.ylim()
+# # BUG: vlines(..., linestyle='--') fails on older versions of matplotlib
+# #plt.vlines(score, ylim[0], ylim[1], linestyle='--',
+# #          color='g', linewidth=3, label='Classification Score'
+# #          ' (pvalue %s)' % pvalue)
+# #plt.vlines(1.0 / n_classes, ylim[0], ylim[1], linestyle='--',
+# #          color='k', linewidth=3, label='Luck')
+# plt.plot(2 * [score], ylim, '--g', linewidth=3,
+#          label='Classification Score'
+#          ' (pvalue %s)' % pvalue)
+# # plt.plot(2 * [1. / 2], ylim, '--k', linewidth=3, label='Luck')
+
+# plt.ylim(ylim)
+# plt.legend()
+# plt.xlabel('ROC_AUC')
+# plt.title('Null Hypothesis Distribution, Gender Classification in the entire dataset')
+
+# plt.show()
 
 
-
+###### gender_all ###########
+# 0.739406213876
+# [ 0.50437504,  0.49224605,  0.49191995,  0.49566848,  0.49492412,  0.48702513,
+#   0.49115403,  0.48533501,  0.49805792 , 0.48684543,  0.48980403,  0.49669477,
+#   0.50122436,  0.49920821,  0.49322527,  0.5002172 ,  0.49936136,  0.48923928,
+#   0.49348848,  0.49869563,  0.51201327,  0.50579795,  0.49724359,  0.49589884,
+#   0.48731175,  0.5009984 ,  0.49846776,  0.50167   ,  0.49915925,  0.50415856,
+#   0.49316189,  0.50881753,  0.50181381,  0.49507037,  0.50038005,  0.49465273,
+#   0.50134407,  0.49440519,  0.49550935,  0.49462646,  0.50050174 , 0.50646697,
+#   0.50168243,  0.49439942,  0.50632046,  0.50319404,  0.50524299,  0.49283034,
+#   0.49599869,  0.49063093,  0.4993611 ,  0.50554208,  0.48781361,  0.49785781,
+#   0.49752882,  0.49106908,  0.49655983,  0.49139112,  0.49752044,  0.48778922,
+#   0.49640709,  0.49273588,  0.49686474,  0.51478742,  0.50403216,  0.5000754,
+#   0.5020368 ,  0.50877752,  0.49432229,  0.48611627,  0.50192598,  0.50568073,
+#   0.49518297,  0.49219663,  0.49482647,  0.49373603,  0.50346483,  0.50072786,
+#   0.49997537,  0.51703013,  0.49633941,  0.49028236,  0.50854157,  0.50856681,
+#   0.49408143,  0.49276744,  0.5102487 ,  0.49721311,  0.50527343,  0.50794338,
+#   0.48823618,  0.50652733,  0.50613052,  0.49784451,  0.51360225,  0.49611091,
+#   0.49571173,  0.48563578,  0.50127042,  0.49431938,  0.51037535,  0.50846868,
+#   0.50369432,  0.49868827,  0.50235916,  0.49546812,  0.50103608,  0.50374759,
+#   0.4961585 ,  0.50107658,  0.491594  ,  0.50845275,  0.49276216,  0.49606649,
+#   0.50678535,  0.50542218,  0.5004665 ,  0.49198584,  0.50127204,  0.5100256,
+#   0.48891449,  0.49829505,  0.497816  ,  0.50881741,  0.49927171,  0.50316143,
+#   0.50211645,  0.50748643,  0.49623243,  0.5046071 ,  0.49675133,  0.5053474,
+#   0.50337425,  0.49786658,  0.50936399,  0.49856615,  0.51331728,  0.49676327,
+#   0.50117522,  0.50030525,  0.50191843,  0.49962853,  0.50171019,  0.49087868,
+#   0.4940388 ,  0.50005597,  0.49437952,  0.49258372,  0.49170534,  0.50298808]
+# 0.00662251655629
